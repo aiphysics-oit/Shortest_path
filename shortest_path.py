@@ -3,29 +3,51 @@ import graphviz
 
 # ==== データ読み込み ====
 G = nx.Graph()
-node_labels = {}
-l2_labels = {}
 
-with open('ROBOT_DB_L1-L2.txt', 'r') as file:
+# L1-L2ファイルの読み込み
+with open("ROBOT_DB_L1-L2.txt", 'r') as file:
     lines = file.readlines()
 
-num_nodes = int(lines[0].split()[0])
-node_data_lines = lines[1:num_nodes + 1]
+# ノード数の取得
+L1_L2_nodes = int(lines[0].split()[0])
+# ノードラベル辞書を作成
+node_labels = {}
+L2code_to_L1num = {}
+L1num_to_L2code = {}
 
+# エッジを保存するためのセット
+black_edges = set()
+red_edges = set()
+blue_edges = set()
+
+# L1-L2ファイルからノード情報を取得
+node_data_lines = lines[1:L1_L2_nodes + 1]
 for line in node_data_lines:
-    node_id = int(line.split()[0])
+    parts = line.split()
+    node_id = int(parts[0])
+
+    # L1およびL2ラベルの抽出
     L1start = line.find('L1  |') + len('L1  |')
     L1end = line.find('L2')
     L1label = line[L1start:L1end].strip().replace('|', '\n')
+
     L2start = line.find('L2  |') + len('L2  |')
     L2end = line.find('#')
     L2label = line[L2start:L2end].strip()
-    label = f"# {node_id}\n{L1label}\n{L2label}"
+
+    # ノードラベルを作成し、ノードを追加
+    label = f"{L1label}\n"
     G.add_node(node_id, label=label)
     node_labels[node_id] = label
-    l2_labels[node_id] = L2label
 
-# ==== L1エッジ ====
+    # L1ノードとL2ラベルの対応関係を保存
+    if L2label not in L2code_to_L1num:
+        L2code_to_L1num[L2label] = []
+    L2code_to_L1num[L2label].append(node_id)
+    L1num_to_L2code[node_id] = L2label
+
+# 黒いエッジの追加
+edge_start_idx = None
 for i, line in enumerate(lines):
     if '# number of L1 edges'.lower() in line.strip().lower():
         edge_start_idx = i + 1
@@ -33,14 +55,37 @@ for i, line in enumerate(lines):
 
 for line in lines[edge_start_idx:]:
     parts = line.split()
-    if len(parts) >= 2:
-        u, v = int(parts[0]), int(parts[1])
-        G.add_edge(u, v, color='black', weight=1)
+    if len(parts) < 2:
+        continue
+    try:
+        node1 = int(parts[0])
+        node2 = int(parts[1])
+    except ValueError:
+        continue
+    black_edges.add((node1, node2))
 
-# ==== L2エッジ ====
-with open('ROBOT_DB_L2.txt', 'r') as file:
+# L2ファイルの読み込み
+with open("ROBOT_DB_L2.txt", 'r') as file:
     lines = file.readlines()
 
+L2_nodes = int(lines[0].split()[0])
+L2num_to_L2code = {}
+L2code_to_L2num = {}
+
+L2_node_data_lines = lines[1:L2_nodes + 1]
+for line in L2_node_data_lines:
+    parts = line.split()
+    node_id = int(parts[0])
+
+    start = line.find('encode_level: 2 |') + len('encode_level: 2 |')
+    end = line.find('Connected')
+    Label = line[start:end].strip()
+    L2num_to_L2code[node_id] = Label
+    L2code_to_L2num[Label] = node_id
+    label = label + f"#{node_id}"
+
+# 赤いエッジの追加
+edge_start_idx = None
 for i, line in enumerate(lines):
     if '# number of L2 edges'.lower() in line.strip().lower():
         edge_start_idx = i + 1
@@ -48,14 +93,42 @@ for i, line in enumerate(lines):
 
 for line in lines[edge_start_idx:]:
     parts = line.split()
-    if len(parts) >= 2:
-        u, v = int(parts[0]), int(parts[1])
-        G.add_edge(u, v, color='red', weight=1)
+    if len(parts) < 2:
+        continue
+    try:
+        l2_node1 = int(parts[0])
+        l2_node2 = int(parts[1])
+    except ValueError:
+        continue
 
-# L2ラベルが一致するものは青に変更
-for u, v in G.edges():
-    if G[u][v]['color'] == 'red' and l2_labels.get(u) == l2_labels.get(v):
-        G[u][v]['color'] = 'blue'
+    if l2_node1 in L2num_to_L2code and l2_node2 in L2num_to_L2code:
+        l2_label1 = L2num_to_L2code[l2_node1]
+        l2_label2 = L2num_to_L2code[l2_node2]
+
+        if l2_label1 in L2code_to_L1num and l2_label2 in L2code_to_L1num:
+            for l1_node1 in L2code_to_L1num[l2_label1]:
+                for l1_node2 in L2code_to_L1num[l2_label2]:
+                    if not (l1_node1, l1_node2) in black_edges:
+                        red_edges.add((l1_node1, l1_node2))
+
+# 青いエッジの追加
+for l2_label, node_list in L2code_to_L1num.items():
+    for i in range(len(node_list)):
+        for j in range(i + 1, len(node_list)):
+            id_1 = node_list[i]
+            id_2 = node_list[j]
+            blue_edges.add((id_1, id_2))
+
+for edge in red_edges:
+    if edge not in black_edges:
+        G.add_edge(edge[0], edge[1], color='red', weight=1)
+
+for edge in black_edges:
+    G.add_edge(edge[0], edge[1], color='black', weight=1)
+
+for edge in blue_edges:
+    if not G.has_edge(edge[0], edge[1]):  # 他のエッジが存在しない場合のみ追加
+        G.add_edge(edge[0], edge[1], color='blue', weight=0, style='dotted')  # 青い点線を追加
 
 # ==== L1グラフ構築 ====
 G_L1 = nx.Graph()
@@ -93,18 +166,18 @@ for idx, l1_path in enumerate(all_l1_paths):
     path_num = idx + 1
     l1_nodes = set(l1_path)
 
-    # --- L2補完探索用グラフ（L1ノード集合 + L1/L2エッジ） ---
-    G_sub = nx.Graph()
-    G_sub.add_nodes_from(l1_nodes)
+    # --- L2エッジのみの補完グラフ ---
+    G_sub_l2_only = nx.Graph()
+    G_sub_l2_only.add_nodes_from(l1_nodes)
     for u in l1_nodes:
         for v in l1_nodes:
             if u != v and G.has_edge(u, v):
                 if G[u][v]['color'] in ('red', 'blue'):
-                    print(f"L2補完エッジ: {u} -- {v}, 色: {G[u][v]['color']}")
+                    G_sub_l2_only.add_edge(u, v, **G[u][v])
 
     # --- L2経路探索 ---
     try:
-        l2_path = nx.shortest_path(G_sub, source=start, target=goal)
+        l2_path = nx.shortest_path(G_sub_l2_only, source=start, target=goal)
     except nx.NetworkXNoPath:
         l2_path = None
 
@@ -114,7 +187,6 @@ for idx, l1_path in enumerate(all_l1_paths):
         path_descriptions.append(f"Path {path_num} (L2): No path available.")
     elif l2_path != l1_path:
         path_descriptions.append(f"Path {path_num} (L2): {describe_path(l2_path, G)}")
-    # 同じなら省略
 
     # === ノード・エッジ収集 ===
     involved_nodes.update(l1_path)
@@ -149,7 +221,7 @@ for u, v, path_type in involved_edges:
         style = 'dashed' if color == 'blue' else 'solid'
         G_gv.edge(str(u), str(v), color=color, penwidth='3.0', style=style)
 
-# ==== 経路表示ノード ====
+# ==== 経路説明ノード ====
 path_label = '\n'.join(path_descriptions)
 G_gv.node('path_explain', label=path_label, shape='plaintext',
           fontsize='16', fontname='Courier', width='3')

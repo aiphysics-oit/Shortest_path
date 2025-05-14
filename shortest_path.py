@@ -1,244 +1,252 @@
-import networkx as nx
-import graphviz
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+shortest_path.py   –  L1 最短経路 ⇒ L2 エッジ追加 (比較用プログラム準拠)
 
-# ==== データ読み込み ====
-G = nx.Graph()
+* build_graph() は、質問者さんが提示した Python スニペットと
+  **同じロジック** でエッジを生成します。
+* 青＝weight 0, dotted  ；赤＝weight 1 ；黒＝weight 1
+"""
 
-# L1-L2ファイルの読み込み
-with open("ROBOT_DB_L1-L2.txt", 'r') as file:
-    lines = file.readlines()
+from __future__ import annotations
+import argparse, itertools, sys
+from pathlib import Path
+import graphviz, networkx as nx
 
-# ノード数の取得
-L1_L2_nodes = int(lines[0].split()[0])
-# ノードラベル辞書を作成
-node_labels = {}
-L2code_to_L1num = {}
-L1num_to_L2code = {}
+# ---------- 重み & 描画パラメータ -------------------------------
+W_BLACK = 1.0        # L1
+W_RED   = 1.0        # L2
+W_BLUE  = 0.5       # 同一 L2
 
-# エッジを保存するためのセット
-black_edges = set()
-red_edges = set()
-blue_edges = set()
+PEN_L1    = "3.0"    # L1 最短を強調する線幅
+PEN_L2    = "2.0"    # L2 追加エッジ
 
-# L1-L2ファイルからノード情報を取得
-node_data_lines = lines[1:L1_L2_nodes + 1]
-for line in node_data_lines:
-    parts = line.split()
-    node_id = int(parts[0])
+# ---------- CLI ------------------------------------------------
+def cli() -> argparse.Namespace:
+    p = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    p.add_argument("-s", "--start", type=int, default=0)
+    p.add_argument("-g", "--goal",  type=int, default=25)
+    p.add_argument("-k", "--k_paths", type=int, default=10,
+                   help="列挙する L1 最短経路本数 (0=制限なし)")
+    return p.parse_args()
 
-    # L1およびL2ラベルの抽出
-    L1start = line.find('L1  |') + len('L1  |')
-    L1end = line.find('L2')
-    L1label = line[L1start:L1end].strip().replace('|', '\n')
+# ---------- build_graph()  ← 比較用と同じロジック --------------
+def build_graph() -> tuple[nx.Graph, dict[int, str], dict[int, str]]:
+    G = nx.Graph()
 
-    L2start = line.find('L2  |') + len('L2  |')
-    L2end = line.find('#')
-    L2label = line[L2start:L2end].strip()
+    root = Path(__file__).resolve().parent
+    l1_path = root / "1050400_L1-L2_DB.txt"
+    l2_path = root / "1050400_L2_DB.txt"
 
-    # ノードラベルを作成し、ノードを追加
-    label = f"{L1label}\n"
-    G.add_node(node_id, label=label)
-    node_labels[node_id] = label
+    # ===== L1‑L2 ファイル ======================================
+    lines = l1_path.read_text(encoding="utf-8").splitlines()
+    n_nodes = int(lines[0].split()[0])
 
-    # L1ノードとL2ラベルの対応関係を保存
-    if L2label not in L2code_to_L1num:
-        L2code_to_L1num[L2label] = []
-    L2code_to_L1num[L2label].append(node_id)
-    L1num_to_L2code[node_id] = L2label
+    node_labels: dict[int, str] = {}
+    L2code_to_L1num: dict[str, list[int]] = {}
+    L1num_to_L2code: dict[int, str] = {}
 
-# 黒いエッジの追加
-edge_start_idx = None
-for i, line in enumerate(lines):
-    if '# number of L1 edges'.lower() in line.strip().lower():
-        edge_start_idx = i + 1
-        break
+    # --- ノード -------------------------------------------------
+    for ln in lines[1 : 1 + n_nodes]:
+        nid = int(ln.split()[0])
 
-for line in lines[edge_start_idx:]:
-    parts = line.split()
-    if len(parts) < 2:
-        continue
+        L1s = ln.find("L1  |") + len("L1  |")
+        L1e = ln.find("L2")
+        l1_label = ln[L1s:L1e].strip().replace("|", "\n")
+
+        L2s = ln.find("L2  |") + len("L2  |")
+        L2e = ln.find("#", L2s)
+        l2_label = ln[L2s:L2e].strip()
+
+        label = f"# {nid}\n{l1_label}\n{l2_label}"
+        G.add_node(nid, label=label)
+        node_labels[nid] = label
+
+        L2code_to_L1num.setdefault(l2_label, []).append(nid)
+        L1num_to_L2code[nid] = l2_label
+
+    print("1")
+
+    # --- 黒エッジ (L1) -----------------------------------------
+    idx_edges = next(i + 1 for i, ln in enumerate(lines)
+                     if "# number of l1 edges" in ln.lower())
+    for ln in lines[idx_edges:]:
+        sp = ln.split()
+        if len(sp) < 2 or not sp[0].isdigit():
+            continue
+        u, v = map(int, sp[:2])
+        G.add_edge(u, v, color="black", weight=W_BLACK)
+    print("B")
+
+    # ===== L2 ファイル =========================================
+    lines = l2_path.read_text(encoding="utf-8").splitlines()
+    n_l2_nodes = int(lines[0].split()[0])
+
+    # L2 番号 ↔︎ ラベル
+    L2num_to_code: dict[int, str] = {}
+    for ln in lines[1 : 1 + n_l2_nodes]:
+        idx = ln.find("encode_level: 2 |") + len("encode_level: 2 |")
+        label = ln[idx : ln.find("Connected", idx)].strip()
+        L2num_to_code[int(ln.split()[0])] = label
+
+    idx_edges = next(i + 1 for i, ln in enumerate(lines)
+                     if "# number of l2 edges" in ln.lower())
+    for ln in lines[idx_edges:]:
+        sp = ln.split()
+        if len(sp) < 2 or not sp[0].isdigit():
+            continue
+        a, b = map(int, sp[:2])
+        lab_a = L2num_to_code.get(a)
+        lab_b = L2num_to_code.get(b)
+        if lab_a is None or lab_b is None:
+            continue
+
+        for u in L2code_to_L1num.get(lab_a, []):
+            for v in L2code_to_L1num.get(lab_b, []):
+                if u == v or G.has_edge(u, v):
+                    continue
+                G.add_edge(u, v, color="red", weight=W_RED)   # 赤エッジ
+    print("R")
+
+    # ===== 青点線 (同一 L2 ラベル) =============================
+    for u in G.nodes():
+        for v in G.nodes():
+            if u >= v:
+                continue
+            if L1num_to_L2code[u] == L1num_to_L2code[v] and not G.has_edge(u, v):
+                G.add_edge(u, v, color="blue", weight=W_BLUE, style="dotted")
+
+    print("B")
+
+    return G, node_labels, L1num_to_L2code
+
+def write_edge_lists(G: nx.Graph, out_path: str = "all_edges.txt") -> None:
+    """グラフ G から色別エッジ一覧を out_path に保存"""
+
+    black_edges, red_edges, blue_edges = [], [], []
+    for u, v, data in G.edges(data=True):
+        col = data.get("color", "")
+        if col == "black":
+            black_edges.append((u, v))
+        elif col == "red":
+            red_edges.append((u, v))
+        elif col == "blue":
+            blue_edges.append((u, v))
+
+    def format_edges(edge_list: list[tuple[int, int]]) -> str:
+        """20 組ごとに改行し ‘|’ 区切りで整形"""
+        lines, buf = [], []
+        for i, (u, v) in enumerate(edge_list, 1):
+            buf.append(f"{u}-{v}")
+            if i % 20 == 0:
+                lines.append(" | ".join(buf))
+                buf = []
+        if buf:
+            lines.append(" | ".join(buf))
+        return "\n".join(lines)
+
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write(f"### Black Edges (L1 edges) - {len(black_edges)} edges\n")
+        f.write(format_edges(black_edges) + "\n\n\n")
+
+        f.write(f"### Red Edges (L2 relationship edges) - {len(red_edges)} edges\n")
+        f.write(format_edges(red_edges) + "\n\n\n")
+
+        f.write(f"### Blue Edges (Same L2 code, dotted) - {len(blue_edges)} edges\n")
+        f.write(format_edges(blue_edges) + "\n\n\n")
+
+    print(f"[+] edge list written → {out_path}")
+
+# ---------- 経路探索 -------------------------------------------
+def l1_shortest_paths(G: nx.Graph, s: int, t: int, k: int | None) -> list[list[int]]:
+    H = nx.Graph((u, v, d) for u, v, d in G.edges(data=True) if d["color"] == "black")
+    gen = nx.all_shortest_paths(H, s, t, weight="weight")
+    return list(itertools.islice(gen, k)) if k else list(gen)
+
+def l1l2_paths(G: nx.Graph, allowed: set[int], s: int, t: int,
+               k: int | None = 5) -> list[list[int]]:
+    SG = G.subgraph(allowed)
+    gen = nx.shortest_simple_paths(SG, s, t, weight="weight")
+    paths: list[list[int]] = []
+    for p in gen:
+        if any(SG[u][v]["color"] in ("red", "blue") for u, v in zip(p, p[1:])):
+            paths.append(p)
+            if k and len(paths) >= k:
+                break
+    return paths
+
+# ---------- 可視化ユーティリティ -------------------------------
+def arrow(col: str) -> str:
+    return {"red": "=>", "blue": "--"}.get(col, "->")
+
+def path_str(G: nx.Graph, p: list[int]) -> str:
+    return "".join(f"{u}{arrow(G[u][v]['color'])}" for u, v in zip(p, p[1:])) + str(p[-1])
+
+def add_edges(gv: graphviz.Graph, G: nx.Graph, edges: set[tuple[int, int]],
+              *, color: str | None = None, width: str = "2.0"):
+    for u, v in edges:
+        d = G[u][v]
+        if color is not None:
+            d["color"] = color
+        gv.edge(str(u), str(v),
+                color=d["color"],
+                penwidth=width,
+                style=d.get("style", "dotted" if d["color"] == "blue" else "solid"))
+
+# ---------- メイン ---------------------------------------------
+def main() -> None:
+    args = cli()
+    s, t = args.start, args.goal
+    k    = args.k_paths if args.k_paths > 0 else None
+
+    G, labels, _ = build_graph()
+
+    write_edge_lists(G, "all_edges.txt")
+
+
+    # ① L1 最短経路
+    l1_paths = l1_shortest_paths(G, s, t, k)
+    l1_nodes = set(itertools.chain.from_iterable(l1_paths))
+
+    # ② L2 / blue エッジ（allowed 内）
+    l2_edges = {tuple(sorted((u, v)))
+                for u, v, d in G.edges(data=True)
+                if d["color"] in ("red", "blue") and u in l1_nodes and v in l1_nodes}
+
+    # ---------- Graphviz 描画 ---------------------------------
+    gv = graphviz.Graph("L1_vs_L2", engine="dot")
+
+    for n in l1_nodes:
+        fill = "green" if n == s else "red" if n == t else "white"
+        gv.node(str(n), label=labels[n], style="filled", fillcolor=fill)
+
+    # L1 最短経路 (紫で上書き表現)
+    l1e = {tuple(sorted((u, v))) for p in l1_paths for u, v in zip(p, p[1:])}
+    add_edges(gv, G, l1e, color="black", width=PEN_L1)
+
+    # 追加された赤・青エッジ
+    add_edges(gv, G, l2_edges, width=PEN_L2)
+
+    # L1+L2 経路
+    l1l2 = l1l2_paths(G, l1_nodes, s, t, k)
+
+    # 情報ノード
+    info  = [f"L1   {i}: {path_str(G, p)}" for i, p in enumerate(l1_paths, 1)]
+    info += [f"L1+L2    {i}: {path_str(G, p)}" for i, p in enumerate(l1l2,   1)]
+    gv.node("info", label="\n".join(info), shape="plaintext", fontname="Courier")
+    gv.edge(str(s), "info", style="invis")
+
+    gv.attr(dpi="300", rankdir="TB", margin="0.3", nodesep="0.3", ranksep="0.3")
+    out = "l1_l2_comparison_final"
+    print(f"[+] rendering → {out}.pdf")
+    gv.render(out, format="pdf", cleanup=True, quiet=True)
+    gv.view()
+
+
+# --------------------------------------------------------------
+if __name__ == "__main__":
     try:
-        node1 = int(parts[0])
-        node2 = int(parts[1])
-    except ValueError:
-        continue
-    black_edges.add((node1, node2))
-
-# L2ファイルの読み込み
-with open("ROBOT_DB_L2.txt", 'r') as file:
-    lines = file.readlines()
-
-L2_nodes = int(lines[0].split()[0])
-L2num_to_L2code = {}
-L2code_to_L2num = {}
-
-L2_node_data_lines = lines[1:L2_nodes + 1]
-for line in L2_node_data_lines:
-    parts = line.split()
-    node_id = int(parts[0])
-
-    start = line.find('encode_level: 2 |') + len('encode_level: 2 |')
-    end = line.find('Connected')
-    Label = line[start:end].strip()
-    L2num_to_L2code[node_id] = Label
-    L2code_to_L2num[Label] = node_id
-    label = label + f"#{node_id}"
-
-# 赤いエッジの追加
-edge_start_idx = None
-for i, line in enumerate(lines):
-    if '# number of L2 edges'.lower() in line.strip().lower():
-        edge_start_idx = i + 1
-        break
-
-for line in lines[edge_start_idx:]:
-    parts = line.split()
-    if len(parts) < 2:
-        continue
-    try:
-        l2_node1 = int(parts[0])
-        l2_node2 = int(parts[1])
-    except ValueError:
-        continue
-
-    if l2_node1 in L2num_to_L2code and l2_node2 in L2num_to_L2code:
-        l2_label1 = L2num_to_L2code[l2_node1]
-        l2_label2 = L2num_to_L2code[l2_node2]
-
-        if l2_label1 in L2code_to_L1num and l2_label2 in L2code_to_L1num:
-            for l1_node1 in L2code_to_L1num[l2_label1]:
-                for l1_node2 in L2code_to_L1num[l2_label2]:
-                    if not (l1_node1, l1_node2) in black_edges:
-                        red_edges.add((l1_node1, l1_node2))
-
-# 青いエッジの追加
-for l2_label, node_list in L2code_to_L1num.items():
-    for i in range(len(node_list)):
-        for j in range(i + 1, len(node_list)):
-            id_1 = node_list[i]
-            id_2 = node_list[j]
-            blue_edges.add((id_1, id_2))
-
-for edge in red_edges:
-    if edge not in black_edges:
-        G.add_edge(edge[0], edge[1], color='red', weight=1)
-
-for edge in black_edges:
-    G.add_edge(edge[0], edge[1], color='black', weight=1)
-
-for edge in blue_edges:
-    if not G.has_edge(edge[0], edge[1]):  # 他のエッジが存在しない場合のみ追加
-        G.add_edge(edge[0], edge[1], color='blue', weight=0, style='dotted')  # 青い点線を追加
-
-# ==== L1グラフ構築 ====
-G_L1 = nx.Graph()
-for u, v, d in G.edges(data=True):
-    if d['color'] == 'black':
-        G_L1.add_edge(u, v)
-
-# ==== スタート・ゴール指定 ====
-start = 0
-goal = 25
-
-try:
-    all_l1_paths = list(nx.all_shortest_paths(G_L1, source=start, target=goal))
-except nx.NetworkXNoPath:
-    all_l1_paths = []
-
-# ==== 描画準備 ====
-G_gv = graphviz.Graph('l1_l2_comparison', engine='dot')
-involved_nodes = set()
-involved_edges = set()
-path_descriptions = []
-
-def describe_path(path, G):
-    desc = []
-    for u, v in zip(path, path[1:]):
-        edge_data = G.get_edge_data(u, v, {})
-        connector = '--' if edge_data.get('color') == 'blue' else '->'
-        desc.append(str(u))
-        desc.append(connector)
-    desc.append(str(path[-1]))
-    return ''.join(desc)
-
-# ==== パスごとの処理 ====
-for idx, l1_path in enumerate(all_l1_paths):
-    path_num = idx + 1
-    l1_nodes = set(l1_path)
-
-    # --- L2エッジのみの補完グラフ ---
-    G_sub_l2_only = nx.Graph()
-    G_sub_l2_only.add_nodes_from(l1_nodes)
-    for u in l1_nodes:
-        for v in l1_nodes:
-            if u != v and G.has_edge(u, v):
-                if G[u][v]['color'] in ('red', 'blue'):
-                    G_sub_l2_only.add_edge(u, v, **G[u][v])
-
-    # --- L2経路探索 ---
-    try:
-        l2_path = nx.shortest_path(G_sub_l2_only, source=start, target=goal)
-    except nx.NetworkXNoPath:
-        l2_path = None
-
-    # === パス表示 ===
-    path_descriptions.append(f"Path {path_num} (L1): {describe_path(l1_path, G)}")
-    if l2_path is None:
-        path_descriptions.append(f"Path {path_num} (L2): No path available.")
-    elif l2_path != l1_path:
-        path_descriptions.append(f"Path {path_num} (L2): {describe_path(l2_path, G)}")
-
-    # === ノード・エッジ収集 ===
-    involved_nodes.update(l1_path)
-    if l2_path:
-        involved_nodes.update(l2_path)
-
-    for u, v in zip(l1_path, l1_path[1:]):
-        involved_edges.add((u, v, 'l1'))
-    if l2_path:
-        for u, v in zip(l2_path, l2_path[1:]):
-            if (u, v, 'l1') not in involved_edges and (v, u, 'l1') not in involved_edges:
-                involved_edges.add((u, v, 'l2'))
-
-# ==== ノード描画 ====
-for node in involved_nodes:
-    label = node_labels.get(node, "")
-    fill = 'green' if node == start else 'red' if node == goal else 'white'
-    G_gv.node(
-        str(node), label=label,
-        style='filled', fillcolor=fill,
-        fontsize='10', fontname='Helvetica',
-        fixedsize='false'
-    )
-
-# ==== エッジ描画 ====
-for u, v, path_type in involved_edges:
-    data = G.get_edge_data(u, v) or G.get_edge_data(v, u) or {}
-    color = data.get('color', 'black')
-    if path_type == 'l1':
-        G_gv.edge(str(u), str(v), color='purple', penwidth='3.0', style='solid')
-    else:
-        style = 'dashed' if color == 'blue' else 'solid'
-        G_gv.edge(str(u), str(v), color=color, penwidth='3.0', style=style)
-
-# ==== 経路説明ノード ====
-path_label = '\n'.join(path_descriptions)
-G_gv.node('path_explain', label=path_label, shape='plaintext',
-          fontsize='16', fontname='Courier', width='3')
-G_gv.edge(str(start), 'path_explain', style='invis', weight='100')
-
-# ==== グラフ属性 ====
-G_gv.attr(
-    rankdir='TB',
-    dpi='300',
-    margin='0.3',
-    nodesep='0.3',
-    ranksep='0.3',
-    splines='true',
-    overlap='false'
-)
-
-# ==== 出力 ====
-file_name = 'l1_l2_comparison_final'
-G_gv.render(file_name, format='pdf', cleanup=True)
-G_gv.view()
+        main()
+    except KeyboardInterrupt:
+        sys.exit("\nInterrupted by user")

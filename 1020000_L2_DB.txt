@@ -1,0 +1,100 @@
+26 # number of nodes
+0	E90A959FD66DB1BDD48E8978FF16EB37A1BA4EF4	encode_ver: 2.0, encode_level: 2 | B000:[---][---][---][---][---][---][---][---] | L001:[001][---] | L001:[001][---]	Connected 1,1|2,1|Not connected 0,0|0,1|0,2|0,3|0,4|0,5|0,6|0,7|1,0|2,0|
+1	BF887329E14EFC219970C56175F084BE3443D4F1	encode_ver: 2.0, encode_level: 2 | B000:[002][---][001][---][---][---][---][---] | L001:[000][---] | L002:[000][---]	Connected 0,0|0,2|1,0|2,0|Not connected 0,1|0,3|0,4|0,5|0,6|0,7|1,1|2,1|
+2	4EC7597EBE4A68F4D7C432B4130CB2870EAC7EB9	encode_ver: 2.0, encode_level: 2 | B000:[002][---][---][001][---][---][---][---] | L001:[000][---] | L002:[000][---]	Connected 0,0|0,3|1,0|2,1|Not connected 0,1|0,2|0,4|0,5|0,6|0,7|1,1|2,0|
+3	B0C8185FD7F7308F119BFFBC85D6ED8378AA5413	encode_ver: 2.0, encode_level: 2 | B000:[---][---][001][---][---][---][---][---] | L001:[000][002] | L002:[001][---]	Connected 0,2|1,1|2,0|2,1|Not connected 0,0|0,1|0,3|0,4|0,5|0,6|0,7|1,0|
+4	5C0EF4E269F26932FE5C01A2F1F582E8890206C1	encode_ver: 2.0, encode_level: 2 | B000:[001][---][---][---][---][---][---][---] | L001:[002][000] | L002:[001][---]	Connected 0,0|1,0|1,1|2,1|Not connected 0,1|0,2|0,3|0,4|0,5|0,6|0,7|2,0|
+5	960C28A6381DF098B7243736FC92C7A19C5939B0	encode_ver: 2.0, encode_level: 2 | B000:[---][---][001][001][---][---][---][---] | L001:[000][---] | L001:[000][---]	Connected 0,2|0,3|1,0|2,0|Not connected 0,0|0,1|0,4|0,5|0,6|0,7|1,1|2,1|
+6	C04D524FB96E4951A618FE3761793750F0F6371B	encode_ver: 2.0, encode_level: 2 | B000:[---][---][001][---][002][---][---][---] | L001:[000][---] | L002:[000][---]	Connected 0,2|0,6|1,0|2,0|Not connected 0,0|0,1|0,3|0,4|0,5|0,7|1,1|2,1|
+7	82E527847D1FE21FBA33812976A88F6BD73393F4	encode_ver: 2.0, encode_level: 2 | B000:[---][---][---][001][002][---][---][---] | L001:[000][---] | L002:[000][---]	Connected 0,2|0,7|1,0|2,0|Not connected 0,0|0,1|0,3|0,4|0,5|0,6|1,1|2,1|
+8	64D2397DB0827E14D0BC068AA5203FCA0D6F326C	encode_ver: 2.0, encode_level: 2 | B000:[---][---][---][---][---][---][---][---] | L001:[001][001] | L001:[001][001]	Connected 1,0|1,1|2,0|2,1|Not connected 0,0|0,1|0,2|0,3|0,4|0,5|0,6|0,7|
+9	30D6596299D03099ECA828D866DF96E5963FDB2D	encode_ver: 2.0, encode_level: 2 | B000:[002][---][---][---][001][---][---][---] | L001:[000][---] | L002:[000][---]	Connected 0,0|0,6|1,0|2,0|Not connected 0,1|0,2|0,3|0,4|0,5|0,7|1,1|2,1|
+10	C86E73B9145588A0573C0885A5A7944EEBD350C9	encode_ver: 2.0, encode_level: 2 | B000:[---][---][---][---][---][001][---][---] | L001:[002][000] | L002:[001][---]	Connected 0,7|1,1|2,0|2,1|Not connected 0,0|0,1|0,2|0,3|0,4|0,5|0,6|1,0|
+11	62FABB6F255706E5B33899DDADBD75DF06AE226F	encode_ver: 2.0, encode_level: 2 | B000:[002][---][---][---][---][001][---][---] | L001:[000][---] | L002:[000][---]	Connected 0,0|0,7|1,0|2,0|Not connected 0,1|0,2|0,3|0,4|0,5|0,6|1,1|2,1|
+12	992B1005580F6B6C8725E3BB2149A7BE6A6E93AB	encode_ver: 2.0, encode_level: 2 | B000:[---][---][---][---][001][001][---][---] | L001:[000][---] | L001:[000][---]	Connected 0,6|0,7|1,0|2,0|Not connected 0,0|0,1|0,2|0,3|0,4|0,5|1,1|2,1|
+13	2B1AC8B0096C5B5F83B8BB6A97F734283388F7B9	encode_ver: 2.0, encode_level: 2 | B000:[002][---][001][001][---][---][---][---] | L001:[000][000] | L002:[000][---]	Connected 0,0|0,2|0,3|1,0|2,0|2,1|Not connected 0,1|0,4|0,5|0,6|0,7|1,1|
+14	D3CDEB8D833091AB5FA12F48FDF4833A188D823D	encode_ver: 2.0, encode_level: 2 | B000:[002][---][001][---][---][---][---][---] | L001:[000][002] | L002:[000][001]	Connected 0,0|0,2|1,0|1,1|2,0|2,1|Not connected 0,1|0,3|0,4|0,5|0,6|0,7|
+15	8FB28060F04E98882B8E8E5C38AB73721EA83299	encode_ver: 2.0, encode_level: 2 | B000:[---][---][001][001][---][---][---][---] | L001:[001][000] | L001:[001][000]	Connected 0,2|0,3|1,0|1,1|2,0|2,1|Not connected 0,0|0,1|0,4|0,5|0,6|0,7|
+16	C2C113ADFB32B049C5F74F3DCDD1E730BFF4CF93	encode_ver: 2.0, encode_level: 2 | B000:[---][---][001][---][002][---][---][---] | L001:[000][002] | L002:[000][001]	Connected 0,2|0,6|1,0|1,1|2,0|2,1|Not connected 0,0|0,1|0,3|0,4|0,5|0,7|
+17	8162F3992A83C5D66D0B781B9E5D7FD25DC33858	encode_ver: 2.0, encode_level: 2 | B000:[---][---][---][001][002][---][---][---] | L001:[002][000] | L002:[001][000]	Connected 0,2|0,7|1,0|1,1|2,0|2,1|Not connected 0,0|0,1|0,3|0,4|0,5|0,6|
+18	A6997D7B68D2A965CABD4BC1D367752F3E298A20	encode_ver: 2.0, encode_level: 2 | B000:[---][002][001][---][---][---][---][---] | L001:[000][002] | L002:[001][000]	Connected 0,0|0,3|1,0|1,1|2,0|2,1|Not connected 0,1|0,2|0,4|0,5|0,6|0,7|
+19	D1999C662EDC2161B4AAB333C8E3E1854C21CA91	encode_ver: 2.0, encode_level: 2 | B000:[002][---][---][---][001][---][---][---] | L001:[000][002] | L002:[000][001]	Connected 0,0|0,6|1,0|1,1|2,0|2,1|Not connected 0,1|0,2|0,3|0,4|0,5|0,7|
+20	C06B4AC37FE08036A69BA654B24406EE6C9E6DB4	encode_ver: 2.0, encode_level: 2 | B000:[002][---][---][---][---][001][---][---] | L001:[002][000] | L002:[001][000]	Connected 0,0|0,7|1,0|1,1|2,0|2,1|Not connected 0,1|0,2|0,3|0,4|0,5|0,6|
+21	99C6194C4050916FECAD1D9C838462C0A541231A	encode_ver: 2.0, encode_level: 2 | B000:[---][---][001][001][002][---][---][---] | L001:[000][000] | L002:[000][---]	Connected 0,2|0,3|0,7|1,0|2,0|2,1|Not connected 0,0|0,1|0,4|0,5|0,6|1,1|
+22	D1F2FC72122231EB0B5BF9908F95A694EC18FA06	encode_ver: 2.0, encode_level: 2 | B000:[---][---][002][---][001][001][---][---] | L001:[000][000] | L002:[000][---]	Connected 0,2|0,6|0,7|1,0|1,1|2,0|Not connected 0,0|0,1|0,3|0,4|0,5|2,1|
+23	E8548E779E03DC3C819B78F2C67B6A5579037554	encode_ver: 2.0, encode_level: 2 | B000:[---][---][---][---][001][001][---][---] | L001:[001][000] | L001:[001][000]	Connected 0,6|0,7|1,0|1,1|2,0|2,1|Not connected 0,0|0,1|0,2|0,3|0,4|0,5|
+24	C9F9B2C7BB77E5EBCB0C7F653AF1D2966DFC9D7C	encode_ver: 2.0, encode_level: 2 | B000:[002][---][---][---][001][001][---][---] | L001:[000][000] | L002:[000][---]	Connected 0,0|0,6|0,7|1,0|2,0|2,1|Not connected 0,1|0,2|0,3|0,4|0,5|1,1|
+25	806561DCEC2179AABBF51A63D716621D3B1A0E43	encode_ver: 2.0, encode_level: 2 | B000:[---][---][002][002][001][001][---][---] | L001:[000][000] | L002:[000][000]	Connected 0,2|0,3|0,6|0,7|1,0|1,1|2,0|2,1|Not connected 0,0|0,1|0,4|0,5|
+72 # number of L2 edges
+13	2	Disassemble Port(0, 2) : Port(2, 0)
+13	1	Disassemble Port(0, 3) : Port(2, 1)
+9	24	Assemble Port(0, 7) : Port(2, 1)
+9	19	Assemble Port(1, 1) : Port(2, 1)
+2	13	Assemble Port(0, 2) : Port(2, 0)
+2	18	Assemble Port(1, 1) : Port(2, 0)
+4	18	Assemble Port(0, 3) : Port(2, 0)
+4	20	Assemble Port(0, 7) : Port(2, 0)
+4	19	Assemble Port(0, 6) : Port(2, 0)
+4	14	Assemble Port(0, 2) : Port(2, 0)
+4	0	Disassemble Port(0, 0) : Port(1, 0)
+11	20	Assemble Port(1, 1) : Port(2, 1)
+11	24	Assemble Port(0, 6) : Port(2, 1)
+8	0	Disassemble Port(1, 1) : Port(2, 1)
+25	21	Disassemble Port(0, 7) : Port(1, 0)
+25	22	Disassemble Port(0, 3) : Port(2, 1)
+17	7	Disassemble Port(1, 1) : Port(2, 1)
+17	3	Disassemble Port(0, 7) : Port(1, 0)
+17	10	Disassemble Port(0, 2) : Port(2, 0)
+7	17	Assemble Port(1, 1) : Port(2, 1)
+7	21	Assemble Port(0, 3) : Port(2, 1)
+7	22	Assemble Port(0, 6) : Port(1, 1)
+15	5	Disassemble Port(1, 1) : Port(2, 1)
+15	3	Disassemble Port(0, 3) : Port(1, 0)
+5	15	Assemble Port(1, 1) : Port(2, 1)
+12	23	Assemble Port(1, 1) : Port(2, 1)
+21	25	Assemble Port(0, 6) : Port(1, 1)
+21	7	Disassemble Port(0, 3) : Port(2, 1)
+21	6	Disassemble Port(0, 2) : Port(2, 0)
+18	2	Disassemble Port(1, 1) : Port(2, 1)
+18	4	Disassemble Port(0, 3) : Port(2, 0)
+18	3	Disassemble Port(0, 0) : Port(1, 0)
+3	17	Assemble Port(0, 7) : Port(1, 0)
+3	15	Assemble Port(0, 3) : Port(1, 0)
+3	18	Assemble Port(0, 1) : Port(1, 0)
+3	16	Assemble Port(0, 6) : Port(1, 0)
+3	14	Assemble Port(0, 0) : Port(1, 0)
+3	0	Disassemble Port(0, 2) : Port(2, 0)
+1	13	Assemble Port(0, 3) : Port(2, 1)
+1	14	Assemble Port(1, 1) : Port(2, 1)
+6	21	Assemble Port(0, 3) : Port(2, 1)
+6	16	Assemble Port(1, 1) : Port(2, 1)
+6	22	Assemble Port(0, 7) : Port(1, 1)
+20	4	Disassemble Port(0, 7) : Port(2, 0)
+20	11	Disassemble Port(1, 1) : Port(2, 1)
+20	10	Disassemble Port(0, 0) : Port(1, 0)
+16	3	Disassemble Port(0, 6) : Port(1, 0)
+16	6	Disassemble Port(1, 1) : Port(2, 1)
+16	10	Disassemble Port(0, 2) : Port(2, 0)
+10	17	Assemble Port(0, 2) : Port(1, 0)
+10	20	Assemble Port(0, 0) : Port(1, 0)
+10	16	Assemble Port(0, 3) : Port(1, 0)
+10	19	Assemble Port(0, 1) : Port(1, 0)
+10	23	Assemble Port(0, 6) : Port(1, 0)
+10	0	Disassemble Port(0, 7) : Port(2, 0)
+24	9	Disassemble Port(0, 7) : Port(2, 0)
+24	11	Disassemble Port(0, 6) : Port(2, 1)
+19	9	Disassemble Port(1, 1) : Port(2, 1)
+19	4	Disassemble Port(0, 6) : Port(2, 0)
+19	10	Disassemble Port(0, 0) : Port(1, 0)
+22	25	Assemble Port(0, 3) : Port(2, 1)
+22	7	Disassemble Port(0, 6) : Port(1, 1)
+22	6	Disassemble Port(0, 7) : Port(1, 0)
+14	4	Disassemble Port(0, 2) : Port(2, 0)
+14	3	Disassemble Port(0, 0) : Port(1, 0)
+14	1	Disassemble Port(1, 1) : Port(2, 1)
+23	12	Disassemble Port(1, 1) : Port(2, 1)
+23	10	Disassemble Port(0, 7) : Port(2, 0)
+0	4	Assemble Port(0, 1) : Port(2, 0)
+0	8	Assemble Port(1, 0) : Port(2, 0)
+0	3	Assemble Port(0, 3) : Port(2, 0)
+0	10	Assemble Port(0, 7) : Port(2, 0)

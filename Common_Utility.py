@@ -5,6 +5,9 @@ import networkx as nx
 import graphviz
 import igraph as ig
 from itertools import combinations
+from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
+
 
 # ---------- 定数 ------------------------------------------------------
 W_BLACK = 1.0   # L1 weight
@@ -49,7 +52,7 @@ def build_graph(l1l2_path: Path, l2_path: Path) -> tuple[ig.Graph, dict[int, str
         L2code_to_L1num.setdefault(l2_label, []).append(nid)
         L1num_to_L2code[nid] = l2_label
 
-    # 黒エッジ
+    # 黒エッジ追加
     idx_edges = next(i + 1 for i, ln in enumerate(lines) if "# number of l1 edges" in ln.lower())
     for ln in lines[idx_edges:]:
         sp = ln.split()
@@ -61,10 +64,11 @@ def build_graph(l1l2_path: Path, l2_path: Path) -> tuple[ig.Graph, dict[int, str
         ig_g.es[-1]["weight"] = W_BLACK
     print("black")
 
-    # 既存エッジ記録（赤と青の処理高速化用）
+    # 既存エッジキャッシュとロック
     existing_edges = set(map(tuple, map(sorted, ig_g.get_edgelist())))
+    edge_lock = Lock()
 
-    # L2情報読み込み
+    # L2コード辞書作成
     lines = l2_path.read_text(encoding="utf-8").splitlines()
     n_l2_nodes = int(lines[0].split()[0])
     L2num_to_code = {
@@ -72,39 +76,52 @@ def build_graph(l1l2_path: Path, l2_path: Path) -> tuple[ig.Graph, dict[int, str
         for ln in lines[1:1 + n_l2_nodes]
     }
 
+    # 赤エッジ追加（マルチスレッド）
+    def add_red_edge(u: int, v: int):
+        if u == v:
+            return
+        edge = tuple(sorted((u, v)))
+        with edge_lock:
+            if edge in existing_edges:
+                return
+            ig_g.add_edge(u, v)
+            ig_g.es[-1]["color"] = "red"
+            ig_g.es[-1]["weight"] = W_RED
+            existing_edges.add(edge)
+
     idx_edges = next(i + 1 for i, ln in enumerate(lines) if "# number of l2 edges" in ln.lower())
-    for ln in lines[idx_edges:]:
-        sp = ln.split()
-        if len(sp) < 3 or not sp[0].isdigit():
-            continue
-        a, b = map(int, sp[1:3])
-        la, lb = L2num_to_code.get(a), L2num_to_code.get(b)
-        if la is None or lb is None:
-            continue
-        for u in L2code_to_L1num.get(la, []):
-            for v in L2code_to_L1num.get(lb, []):
-                if u == v:
-                    continue
-                edge = tuple(sorted((u, v)))
-                if edge not in existing_edges:
-                    ig_g.add_edge(u, v)
-                    ig_g.es[-1]["color"] = "red"
-                    ig_g.es[-1]["weight"] = W_RED
-                    existing_edges.add(edge)
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        for ln in lines[idx_edges:]:
+            sp = ln.split()
+            if len(sp) < 3 or not sp[0].isdigit():
+                continue
+            a, b = map(int, sp[1:3])
+            la, lb = L2num_to_code.get(a), L2num_to_code.get(b)
+            if la is None or lb is None:
+                continue
+            for u in L2code_to_L1num.get(la, []):
+                for v in L2code_to_L1num.get(lb, []):
+                    executor.submit(add_red_edge, u, v)
     print("red")
 
-    # 青エッジ（同じL2ラベルのノード間、未接続のみ）
-    for nodes in L2code_to_L1num.values():
-        if len(nodes) > 100:  # オプション: 組合せ爆発回避
-            continue
-        for u, v in combinations(nodes, 2):
-            edge = tuple(sorted((u, v)))
-            if edge not in existing_edges:
-                ig_g.add_edge(u, v)
-                ig_g.es[-1]["color"] = "blue"
-                ig_g.es[-1]["weight"] = W_BLUE
-                ig_g.es[-1]["style"] = "dotted"
-                existing_edges.add(edge)
+    # 青エッジ追加（マルチスレッド）
+    def add_blue_edge(u: int, v: int):
+        edge = tuple(sorted((u, v)))
+        with edge_lock:
+            if edge in existing_edges:
+                return
+            ig_g.add_edge(u, v)
+            ig_g.es[-1]["color"] = "blue"
+            ig_g.es[-1]["weight"] = W_BLUE
+            ig_g.es[-1]["style"] = "dotted"
+            existing_edges.add(edge)
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        for nodes in L2code_to_L1num.values():
+            if len(nodes) > 100:  # 組合せ爆発対策
+                continue
+            for u, v in combinations(nodes, 2):
+                executor.submit(add_blue_edge, u, v)
     print("blue")
 
     return ig_g, node_labels, L1num_to_L2code
